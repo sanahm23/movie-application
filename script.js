@@ -4,6 +4,11 @@ const topContainer = document.getElementById('topContainer');
 const popularContainer = document.getElementById('popularContainer');
 const popHeading = document.getElementById('popHeading');
 const language = 'en-US';
+let currentPage = 1;
+let popularMovies = [];
+let currentSearchTerm = '';
+let isSearching = false;
+
 
 async function getTopMovies() {
     const api_url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=${language}`;
@@ -42,16 +47,18 @@ function createCarouselSlides(data) {
         const img = document.createElement('img');
         img.src = `https://image.tmdb.org/t/p/w300${movie.poster_path}`;
         img.alt = movie.title;
-        img.classList.add('mx-auto', 'col-md-8', 'd-block', 'w-25')
+        img.classList.add('mx-auto', 'col-md-8', 'd-block', 'w-25');
         img.loading = 'lazy';
         slide.appendChild(img);
         carouselInner.appendChild(slide);
+        slide.addEventListener('click', async () => {
+            await showMovieDetails(movie);
+        });
     });
 }
 
-
 async function getPopularMovies() {
-    const api_url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=${language}`;
+    const api_url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=${language}&page=${currentPage}`;
 
     try {
         const response = await fetch(api_url);
@@ -75,7 +82,6 @@ function createMovieCard(movie) {
 
     const cardContent = `
     <div class="card">
-      
       <img src="${posterUrl}" class="card-img-top" alt="${title}" loading="lazy">
       <div class="card-body">
         <h5 class="card-title">${title}</h5>
@@ -89,8 +95,6 @@ function createMovieCard(movie) {
     movieCard.innerHTML = cardContent;
     movieList.appendChild(movieCard);
 }
-
-
 async function getMovieDetails(movieId) {
     const api_url = `https://api.themoviedb.org/3/movie/${movieId}?api_key=${apiKey}&language=${language}`;
     const api_url_videos = `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${apiKey}&language=${language}`;
@@ -116,32 +120,32 @@ async function getMovieDetails(movieId) {
         return null;
     }
 }
-
 async function showMovieDetails(movie) {
+
     const movieDetailsData = await getMovieDetails(movie.id);
     if (!movieDetailsData) {
         return;
     }
 
-    const newTab = window.open('', '_blank');
+
 
     const content = `
-    <div class="container" style="background:linear-gradient(to bottom, #f5f5dc 0%, #808080 88%);">
+    <div class="containers" style="color:white">
       <div class="row">
         <div class="col-12">
           <h2>${movie.title}</h2>
           <p style="font-size:20px"><strong>Overview:</strong> ${movieDetailsData.overview}</p>
-        </div>
-      </div>
+        
       <div class="row">
-        <div class="col-lg-8">
-          <div class="embed-responsive embed-responsive-21by9" id="youtubeDiv">
-            <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/${movieDetailsData.trailerKey}" style="width:500px; height:400px"allowfullscreen></iframe>
+        <div class ="col-lg-4">
+          <div class="embed-responsive embed-responsive-16by9" id="youtubeDiv">
+            <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/${movieDetailsData.trailerKey}"></iframe>
           </div>
         </div>
-        <div class="col-lg-4">
-          <h3>Cast:</h3>
-          <div class="cast-images" style="display:flex; justify-content:space-around">
+        <div class="col-12">
+            <h3>Cast:</h3>
+        </div>
+          <div class="cast-images" ">
             ${movieDetailsData.cast.map(cast => `
               <div class="cast-item">
                 <img src="https://image.tmdb.org/t/p/w200${cast.profile_path}" alt="${cast.name}" class="cast-image">
@@ -151,46 +155,57 @@ async function showMovieDetails(movie) {
             `).join('')}
           </div>
         </div>
-      </div>
+      
       <div class="row">
         <div class="col-12">
           <p><strong>IMDb Rating:</strong> ${movie.vote_average}</p>
         </div>
-      </div>
+      
     </div>
   `;
 
-    newTab.document.body.innerHTML = content;
+    document.body.innerHTML = content;
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    const topMovies = await getTopMovies();
-    createCarouselIndicators(topMovies);
-    createCarouselSlides(topMovies);
+function isBottomOfPage() {
+    return (
+        window.innerHeight + window.scrollY >= document.body.offsetHeight - 200
+    );
+}
 
-    const popularMovies = await getPopularMovies();
-    popularMovies.forEach(movie => createMovieCard(movie));
 
-    document.addEventListener('click', async (event) => {
-        const target = event.target;
-        if (target.classList.contains('view-details')) {
-            const movieId = target.dataset.movieId;
-            const movie = topMovies.find(movie => movie.id.toString() === movieId)
-                || popularMovies.find(movie => movie.id.toString() === movieId);
-            if (movie) {
-                await showMovieDetails(movie);
-            }
-        }
-    });
-});
+async function handleInfiniteScroll() {
+    if (!isSearching && isBottomOfPage()) {
+        currentPage++;
+
+        const popularMovies = await getPopularMovies();
+        popularMovies.forEach((movie) => createMovieCard(movie));
+    }
+}
+
+
+async function handleSearchInfiniteScroll() {
+    if (isSearching && isBottomOfPage()) {
+        currentPage++;
+
+        const searchResultsPage = await fetchSearchResults(currentSearchTerm, currentPage);
+        searchResults = [...searchResults, ...searchResultsPage];
+
+        const movieList = document.getElementById('movieList');
+        searchResultsPage.forEach((movie) => createMovieCard(movie));
+    }
+}
+
+let infiniteScrollEnabled = true;
 
 
 const searchForm = document.getElementById('searchForm');
 const searchInput = document.getElementById('searchInput');
 const movieList = document.getElementById('movieList');
 
-async function fetchSearchResults(query) {
-    const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${query}`;
+
+async function fetchSearchResults(query, page) {
+    const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${query}&page=${page}`;
 
     try {
         const response = await fetch(api_url);
@@ -202,6 +217,8 @@ async function fetchSearchResults(query) {
     }
 }
 
+
+
 async function handleSearchForm(event) {
     event.preventDefault();
     const searchInput = document.getElementById('searchInput');
@@ -212,12 +229,15 @@ async function handleSearchForm(event) {
         return;
     }
 
+    currentPage = 1;
+    currentSearchTerm = searchTerm;
+    isSearching = true;
+    infiniteScrollEnabled = false;
+    searchResults = [];
+
     const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${encodeURIComponent(
         searchTerm
-    )}`;
-    topContainer.style.display = 'none'
-    popularContainer.style.display = 'block'
-    popHeading.style.display = 'none'
+    )}&page=${currentPage}`;
 
     try {
         const response = await fetch(api_url);
@@ -231,18 +251,21 @@ async function handleSearchForm(event) {
         searchResults = data.results;
         const movieList = document.getElementById('movieList');
         movieList.innerHTML = '';
-        data.results.forEach(movie => createMovieCard(movie));
+        data.results.forEach((movie) => createMovieCard(movie));
+        infiniteScrollEnabled = true;
     } catch (error) {
         console.error('Error fetching search results:', error);
     }
 }
+
+
 
 document.addEventListener('click', async (event) => {
     const target = event.target;
     if (target.classList.contains('view-details')) {
         const movieId = target.dataset.movieId;
         if (movieId) {
-            const movie = searchResults.find(movie => movie.id.toString() === movieId);
+            const movie = searchResults.find((movie) => movie.id.toString() === movieId);
             if (movie) {
                 await showMovieDetails(movie);
             }
@@ -254,3 +277,49 @@ document.addEventListener('click', async (event) => {
 });
 
 
+searchForm.addEventListener('submit', handleSearchForm);
+
+
+function enableSearchInfiniteScroll() {
+    if (isSearching && infiniteScrollEnabled) {
+        handleSearchInfiniteScroll();
+    }
+}
+window.addEventListener('scroll', enableSearchInfiniteScroll);
+
+
+async function handlePopularMovieInfiniteScroll() {
+    if (!isSearching && isBottomOfPage()) {
+        currentPage++;
+
+        const popularMoviesPage = await getPopularMovies();
+        popularMovies = [...popularMovies, ...popularMoviesPage];
+
+        popularMoviesPage.forEach((movie) => createMovieCard(movie));
+    }
+}
+
+window.addEventListener('scroll', handlePopularMovieInfiniteScroll);
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const topMovies = await getTopMovies();
+    createCarouselIndicators(topMovies);
+    createCarouselSlides(topMovies);
+
+    popularMovies = await getPopularMovies();
+    popularMovies.forEach((movie) => createMovieCard(movie));
+
+    document.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (target.classList.contains('view-details')) {
+            const movieId = target.dataset.movieId;
+            const movie = topMovies.find((movie) => movie.id.toString() === movieId) ||
+                popularMovies.find((movie) => movie.id.toString() === movieId) ||
+                searchResults.find((movie) => movie.id.toString() === movieId);
+
+            if (movie) {
+                await showMovieDetails(movie);
+            }
+        }
+    });
+});
