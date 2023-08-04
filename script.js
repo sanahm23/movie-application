@@ -10,6 +10,10 @@ let currentSearchTerm = '';
 let isSearching = false;
 let fetchingMovies = false;
 let imageUrl = 'https://image.tmdb.org/t/p/w300'
+const clear = document.getElementById('clear');
+const searchForm = document.getElementById('searchForm');
+const searchInput = document.getElementById('searchInput');
+const movieList = document.getElementById('movieList');
 
 async function getTopMovies() {
     const api_url = `https://api.themoviedb.org/3/trending/movie/week?api_key=${apiKey}&language=${language}`;
@@ -220,9 +224,7 @@ async function handleSearchInfiniteScroll() {
 let infiniteScrollEnabled = true;
 
 
-const searchForm = document.getElementById('searchForm');
-const searchInput = document.getElementById('searchInput');
-const movieList = document.getElementById('movieList');
+
 
 
 
@@ -303,7 +305,7 @@ document.addEventListener('click', async (event) => {
 });
 
 
-searchForm.addEventListener('submit', handleSearchForm,searchInput.focus());
+searchForm.addEventListener('submit', handleSearchForm);
 
 
 function enableSearchInfiniteScroll() {
@@ -349,3 +351,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+// clear.addEventListener("click", () => {
+//   const searchInput = document.getElementById("searchInput");
+//   searchInput.value = "";
+//   isSearching = false;
+//   currentPage + 1;
+//    fetchingMovies = false;
+//   searchResults = [];
+//   const movieList = document.getElementById("movieList");
+//   movieList.innerHTML = "";
+//   popularMovies.forEach((movie) => createMovieCard(movie));
+// });
