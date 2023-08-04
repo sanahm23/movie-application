@@ -254,7 +254,7 @@ async function handleSearchForm(event) {
         alert('Please enter a valid search term.');
         return;
     }
-
+    
     currentPage = 1;
     currentSearchTerm = searchTerm;
     isSearching = true;
@@ -303,7 +303,7 @@ document.addEventListener('click', async (event) => {
 });
 
 
-searchForm.addEventListener('submit', handleSearchForm);
+searchForm.addEventListener('submit', handleSearchForm,searchInput.focus());
 
 
 function enableSearchInfiniteScroll() {
