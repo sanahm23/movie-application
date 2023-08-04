@@ -65,7 +65,7 @@ async function getPopularMovies() {
     try {
         const response = await fetch(api_url);
         const data = await response.json();
-        
+
         if (data.results && data.results.length > 0) {
             return data.results;
         } else {
@@ -135,8 +135,6 @@ async function showMovieDetails(movie) {
         return;
     }
 
-
-
     const content = `
     <div class="containers" style="color:white">
       <div class="row">
@@ -184,28 +182,28 @@ function isBottomOfPage() {
 
 async function handleInfiniteScroll() {
     if (!fetchingMovies && isBottomOfPage()) {
-      if (isSearching) {
-        const searchResultsPage = await fetchSearchResults(
-          currentSearchTerm,
-          currentPage + 1 // Fetch the next page
-        );
-  
-        if (searchResultsPage.length > 0) {
-          searchResults = [...searchResults, ...searchResultsPage];
-          currentPage++;
-          searchResultsPage.forEach((movie) => createMovieCard(movie));
+        if (isSearching) {
+            const searchResultsPage = await fetchSearchResults(
+                currentSearchTerm,
+                currentPage + 1
+            );
+
+            if (searchResultsPage.length > 0) {
+                searchResults = [...searchResults, ...searchResultsPage];
+                currentPage++;
+                searchResultsPage.forEach((movie) => createMovieCard(movie));
+            }
+        } else {
+            const popularMoviesPage = await getPopularMovies(currentPage + 1);
+
+            if (popularMoviesPage.length > 0) {
+                popularMovies = [...popularMovies, ...popularMoviesPage];
+                currentPage++;
+                popularMoviesPage.forEach((movie) => createMovieCard(movie));
+            }
         }
-      } else {
-        const popularMoviesPage = await getPopularMovies(currentPage + 1);
-  
-        if (popularMoviesPage.length > 0) {
-          popularMovies = [...popularMovies, ...popularMoviesPage];
-          currentPage++;
-          popularMoviesPage.forEach((movie) => createMovieCard(movie));
-        }
-      }
     }
-  }
+}
 
 async function handleSearchInfiniteScroll() {
     if (isSearching && isBottomOfPage()) {
@@ -229,23 +227,23 @@ const movieList = document.getElementById('movieList');
 
 
 async function fetchSearchResults(query, page) {
-    fetchingMovies = true; 
+    fetchingMovies = true;
     try {
-      const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${encodeURIComponent(
-        query
-      )}&page=${page}`;
-      const response = await fetch(api_url);
-      const data = await response.json();
-      fetchingMovies = false; 
-  
-      return data.results;
+        const api_url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&language=${language}&query=${encodeURIComponent(
+            query
+        )}&page=${page}`;
+        const response = await fetch(api_url);
+        const data = await response.json();
+        fetchingMovies = false;
+
+        return data.results;
     } catch (error) {
-      console.error('Error fetching search results:', error);
-      fetchingMovies = false;
-      return [];
+        console.error('Error fetching search results:', error);
+        fetchingMovies = false;
+        return [];
     }
-  }
-  
+}
+
 
 async function handleSearchForm(event) {
     event.preventDefault();
