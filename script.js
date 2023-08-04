@@ -176,7 +176,9 @@ async function showMovieDetails(movie) {
 
     document.body.innerHTML = content;
 }
-
+function isAtTopOfPage(){
+    return window.scrollY === 0;
+}
 function isBottomOfPage() {
     return (
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 200
@@ -186,6 +188,11 @@ function isBottomOfPage() {
 
 async function handleInfiniteScroll() {
     if (!fetchingMovies && isBottomOfPage()) {
+    return;
+}
+
+
+    {
         if (isSearching) {
             const searchResultsPage = await fetchSearchResults(
                 currentSearchTerm,
@@ -206,6 +213,7 @@ async function handleInfiniteScroll() {
                 popularMoviesPage.forEach((movie) => createMovieCard(movie));
             }
         }
+        
     }
 }
 
@@ -352,14 +360,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// clear.addEventListener("click", () => {
-//   const searchInput = document.getElementById("searchInput");
-//   searchInput.value = "";
-//   isSearching = false;
-//   currentPage + 1;
-//    fetchingMovies = false;
-//   searchResults = [];
-//   const movieList = document.getElementById("movieList");
-//   movieList.innerHTML = "";
-//   popularMovies.forEach((movie) => createMovieCard(movie));
-// });
+clear.addEventListener("click", () => {
+  const searchInput = document.getElementById("searchInput");
+  searchInput.value = "";
+  isSearching = false;
+  currentPage + 1;
+   fetchingMovies = false;
+  searchResults = [];
+  const movieList = document.getElementById("movieList");
+  movieList.innerHTML = "";
+  popularMovies.forEach((movie) => createMovieCard(movie));
+});
