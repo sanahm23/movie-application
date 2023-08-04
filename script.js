@@ -142,7 +142,7 @@ async function showMovieDetails(movie) {
           <h2>${movie.title}</h2>
           <p style="font-size:20px"><strong>Overview:</strong> ${movieDetailsData.overview}</p>
         
-      <div class="row">
+      <div class="row", style="padding:10px">
         <div class ="col-lg-4">
           <div class="embed-responsive embed-responsive-16by9" id="youtubeDiv">
             <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/${movieDetailsData.trailerKey}"></iframe>
@@ -151,10 +151,10 @@ async function showMovieDetails(movie) {
         <div class="col-12">
             <h3>Cast:</h3>
         </div>
-          <div class="cast-images" ">
+          <div class="cast-images", style="padding:10px">
             ${movieDetailsData.cast.map(cast => `
               <div class="cast-item">
-                <img src="https://image.tmdb.org/t/p/w200${cast.profile_path}" alt="${cast.name}" class="cast-image">
+                <img src="https://image.tmdb.org/t/p/w200${cast.profile_path}" style="padding:10px" alt="${cast.name}" class="cast-image">
                 <h4 class="cast-name" style="">${cast.name}</h4>
               </div>
               
